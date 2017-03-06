@@ -1,0 +1,155 @@
+---
+title: "IS 605 Assignment 5"
+author: "Oluwakemi Omotunde"
+date: "March 5, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Assignment 5
+
+###Problem Set 1
+
+In this problem set we'll work out some properties of the least squares solution that we reviewed in the weekly readings. Consider the unsolvable system Ax = b as given below:
+\left[\begin{bmatrix}
+1 & 0\\
+1 & 1\\
+1 & 3\\
+1 & 4\\
+\end{bmatrix}
+\begin{bmatrix}
+x_1\\
+x_2\\
+\end{bmatrix}
+=
+\begin{bmatrix}
+0\\
+8\\
+8\\
+20\\
+\end{bmatrix}\right]
+
+  + Write R markdown script to compute $$A^TA$$ and $$A^Tb$$.
+
+```{r ATA}
+A <- matrix(c(1, 1, 1, 1, 0, 1, 3, 4), nrow = 4, byrow = FALSE) #build A
+b <- matrix(c(0, 8, 8, 20), nrow = 4) #build b
+A.tran <- t(A)#use the built in function to find A transpose
+
+ATA <- A.tran%*%A #calculate A transpose multiplied by A
+ATA
+```
+
+
+```{r ATb}
+ATb <- A.tran%*%b #calculate A transpose multiplied by b
+ATb
+```
+
+  + Solve for $$\hat{x}$$ in R using the above two computed matrices.
+  
+    + To solve the above, we will use equation $$A^TA*\hat{x} = A^Tb$$. We will essentially just plug in what we have from above to find $$\hat{x}$$ = $$A^Tb/A^TA$$
+    
+```{r }
+x.hat <- solve(ATA, ATb) #use the built in function to find xhat
+x.hat
+```
+
+  + What is the squared error of this solution
+  
+```{r squared error}
+error <- b - A%*%x.hat #this equation is straight from the weeks reading 
+error
+error.square <- sum(error^2)#square error to find error squared
+error.square
+```
+
+  + Instead of b = [0; 8; 8; 20], start with p = [1; 5; 13; 17] and find the exact solution(i.e. show that this system is solvable as all equations are consistent with each other. This should result in an error vector e = 0).
+
+```{r with p}
+p <- matrix(c(1, 5, 13, 17), nrow = 4)#build p
+ATp <- A.tran%*%p #find A transpose p
+p.xhat <- solve(ATA, ATp) #find the xhat associated with equation when using p  
+error.p <- p - A%*%p.xhat #use the above equation to find error when using p
+error.p
+errorp.square <- sum(error^2)
+errorp.square
+
+```
+
+  + Show that the error e = b - p = [-1;3;-5;3].
+  
+```{r}
+e <- b - p #simply plug in our variables
+e
+``` 
+ 
+  + Show that the error e is orthogonal to p and to each of the columns of A.
+    + Two vectors are orthogonal when their dot products are 0.
+```{r orthogonal}
+require(Matrix) #for the crossprod function to check that the dot products are 0
+#break A down in to it's columns
+col1 <- matrix(c(1, 1, 1, 1))
+col2 <- matrix(c(0, 1, 3, 4))
+e.p <- crossprod(e,p)
+e.p
+e.col1 <- crossprod(e, col1)
+e.col1 
+e.col2 <- crossprod(e, col2)
+e.col2 
+```  
+    
+Your code should be able to print all of the above requested quantities. Please include enough comments to make it easy to follow your R markdown document.
+
+###Problem Set 2
+
+Consider the modified auto-mpg data (obtained from the UC Irvine Machine Learning
+dataset). This dataset contains 5 columns: *displacement, horsepower, weight, acceleration,mpg*. We are going to model *mpg* as a function of the other four variables. Write an R markdown script that takes in the auto-mpg data, extracts an A matrix from the first 4 columns and b vector from the fifth (mpg) column. Using the least squares approach, your code should compute the best fitting solution. That is,find the best fitting equation that expresses *mpg* in terms of the other 4 variables. Finally, calculate the fitting error between the *predicted mpg* of your model and the *actual mpg*. Your script should be able to load in the 5 column data set, extract A and b, and perform the rest of the calculations. Please have adequate comments in your code to make it easy to follow your work. Please complete both problem set 1 & problem set 2 in one R markdown document and upload it to the site. You don't have to attach the auto-mpg data. Just write your
+markdown document in such a way that it expects and loads the auto-mpg data file from the current working directoy. As always, your code is expected to compile and run successfully. Adding test cases to demostrate that your code is working will be very helpful.
+
+```{r load data}
+require(RCurl)
+require(plyr)
+data <- getURL('https://archive.ics.uci.edu/ml/machine-learning-databases/auto-mpg/auto-mpg.data') #I was unable to load data from zip file so I loaded from URL
+auto.data <- read.table(textConnection(data),header=F)
+auto.data <- auto.data[c(1:5)] #since we only needed the first 5 columns, I created a subset
+colnames(auto.data) <- c( 'displacement', 'horsepower','weight', 'acceleration', 'mpg')
+head(auto.data)#the class for our data is dataframe and we eventually want numerical matrix
+```
+
+Now that we have loaded our data, we will start my creating our matrix A.
+
+```{r extract A, b}
+A.auto <- data.matrix(auto.data[,1:4])#create the proper subset for A
+intercept <- rep(1, nrow(A.auto))
+A.auto <- cbind(intercept, A.auto) #had to go back to add this as my solution was incorrect initially
+b.auto <- data.matrix(auto.data[,5]) #do the same for b
+#intially tried creating matrix and subset in two steps but the class of my data got compromised
+```
+
+One we have our matrices (A and b), we can compute $$A^TA, A^Tb, \hat{x}$$. We will use our $$\hat{x}$$ values as our coeffients.
+
+```{r x}
+A.trans <- t(A.auto)
+ATA <- A.trans %*% A.auto
+ATb <- A.trans %*% b.auto
+xhat.auto <- solve(ATA, ATb) #use the built in function to find xhat
+round(xhat.auto, digits = 2)
+#alternatively we could use the following
+lm(b.auto ~ A.auto)
+```
+
+Our equation: 2378.20 - 24.54 displacement + 21.93 horsepower + 5.64 weight - .82 acceleration = mpg
+
+```{r calc vs. actual}
+error.auto <- b.auto - A.auto%*%xhat.auto
+error.auto
+errorsquare.auto <-sum(error.auto^2)
+errorsquare.auto
+```
+
+
+The error seems extremely large which leads me to believe that I may have an error somewhere. 
