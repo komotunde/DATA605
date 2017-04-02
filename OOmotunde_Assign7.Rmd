@@ -1,0 +1,102 @@
+---
+title: "IS 605 Assignment 7"
+author: "Oluwakemi Omotunde"
+date: "March 31, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+###Problem Set 1
+
+This week, you'll have only one programming assignment. Please write a function to
+compute the expected value and standard deviation of an array of values. Compare your
+results with that of R's mean and std functions. Please document your work in an RMarkdown file and ensure that you have good comments to help the reader follow your
+work. Now, consider that instead of being able to neatly fit the values in memory in an array, you have an infinite stream of numbers coming by. How would you estimate the mean and standard deviation of such a stream? Your function should be able to return the current estimate of the mean and standard deviation at any time it is asked. Your program should maintain these current estimates and return them back at any invocation of these functions.
+(Hint: You can maintain a rolling estimate of the mean and standard deviation and allow
+these to slowly change over time as you see more and more new values).
+
+  + Just a few things before we do the programming. The mean of a dataset is given as the sum of all the parts divided by the total number  of parts. For example, if we want the mean of 10 student scores, we would add all the  scores together and divide by 10.
+  + Standard deviation is the square root of the sum of each data point minus the mean, squared and then divided by the number of data points minus 1.
+  
+```{r mean/std}
+mean.std <- function(data){
+mean <- sum(data)/length(data)
+std <- sqrt(sum((data - mean)^2)/(length(data)-1))
+#I believe the above will solve for the mean and standard deviation. We now have to generate the proper output.
+result <- c("mean" = mean, "stand. dev." = std)
+result <- as.list(result)
+return(result)
+}
+```
+
+It seems as though the above code will work so I will now test it out with some randomly generated data.
+
+```{r test}
+data <- sample(50, 50, replace = FALSE)
+mean.std(data)
+
+#When I first tried this, got a std of 0 so I went back to ensure that my formula is correct.
+
+data <- sample(50, 100 , replace =  TRUE)
+mean.std(data)
+#I think this was beause I had set replace to FALSE. Once I changes replace to TRUE, otherwise the numbers picked would simply be 1-50 and the average will always be 25.
+
+mean(data) #on first check, the mean function worked fine but I had to go back and make some changes to the standard deviation function.
+sd(data) #initially did not work as I had to fix some parentheses issue.
+
+#Upon checking, I note that my result produced my written function and from the built in R-function are the same.
+```
+
+Now, consider that instead of being able to neatly fit the values in memory in an array, you have an infinite stream of numbers coming by. How would you estimate the mean and standard deviation of such a stream? Your function should be able to return the current estimate of the mean and standard deviation at any time it is asked. Your program should maintain these current estimates and return them back at any invocation of these functions.
+(Hint: You can maintain a rolling estimate of the mean and standard deviation and allow
+these to slowly change over time as you see more and more new values).
+
+
+  + In thinking about this problem, my first thought was that we would need a variable for each part, meaning a variable for the sum, standard deviation, etc and we would need it to be reset to 0 each time we run/add more data. Our first step though, is to create those variables. 
+  
+  
+```{r variables}
+sum_data <- 0
+sumsq_data <- 0
+len_data <- 0
+mean_data <- 0
+std_data <- 0
+#I initially did not set the variables outside of the function below, therefore when I tried to 
+var_func <- function(){
+sum_data <- 0
+sumsq_data <- 0
+len_data <- 0
+mean_data <- 0
+std_data <- 0
+}
+```
+
+Now we can work out what each variable will be at each run of the funtion.
+
+```{r}
+rolling_fun <- function(data){
+  for (i in data){
+    sum_data <- sum_data + i
+    len_data <- len_data + 1
+    mean_data <- sum_data/len_data
+    sumsq_data <- sumsq_data + i^2
+    std_data <-  sqrt((len_data) * sumsq_data - sum_data^2)/(len_data)
+  }
+  return (c("n" = len_data, "mean" = mean_data, "std" = std_data))
+}
+```
+
+Now to test the above function to ensure it does what I want it to do. 
+
+```{r test_func}
+data <- sample(100, 1000,  replace = TRUE)
+var_func()
+rolling_fun(data)
+mean(data)
+sd(data)
+
+#when checked, we see that we get the same values as from our function 
+```
+
