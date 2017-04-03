@@ -1,0 +1,62 @@
+---
+title: "IS 605 Assignment 8"
+author: "Oluwakemi Omotunde"
+date: "April 2, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+In the Grade Network that we looked at in the notes, what happens to the probability of
+Diffculty of Course when you present the evidence that the received recommendation let-
+ter was good? In addition, now present the evidence that both SAT scores were good and
+the letter of recommendation was good, What is the probability of the Diffculty of Course now? You should use the gRain package in R to build your network and perform these calculations. You may need to install RBGL package from BioConductor in R to get gRain working. See http://www.bioconductor.org/packages/release/bioc/html/RBGL.html for
+instructions on RBGL. Please submit your assignment as an R markdown document.
+
+```{r set variables}
+require(gRain)
+#Now to set the variables going off of the chart on page 3 of our notes
+
+level_ny  <- c("no", "yes")
+level_lh <- c("low", "high")
+
+#now to set the provided probabilities for wach category
+
+d <- cptable(~difficulty, values = c(.3, .7), levels = level_ny)
+i <- cptable(~intelligence, values = c(.8, .2), levels = level_lh)
+s <- cptable(~SAT|intelligence, values = c(.9, .2, .1, .8), levels = level_lh)
+g <- cptable(~grade|difficulty:intelligence, values = c(.6, .4, .8, .2, .1, .99, .1, .9), levels = level_lh)
+l <- cptable(~letter|grade, values = c(.9, .01, .05, .95), levels = level_lh)
+plist <- compileCPT(list(d, i, s, g, l))
+#as a check I want to ake sure that my input correlates to what is provided in the reading
+plist$difficulty
+plist$intelligence
+plist$SAT
+plist$grade
+plist$letter
+```
+
+Now that we have our variables as it is in the output is similar to and probablities set we can find the requested probabilities. 
+
+```{r prob}
+grain_list <-  grain(plist)
+querygrain(grain_list, c(nodes = "difficulty", "intelligence", "SAT", "grade", "letter", type = "marginal"))
+```
+  + What happens to the probability of Diffculty of Course when you present the evidence that the received recommendation letter was good?
+
+```{r prob diff}
+prob_diff <- setEvidence(grain_list, nodes = "letter", states = "high")
+querygrain(prob_diff, nodes = "difficulty", type = "marginal")
+```
+      + Given the evidence above, we see that the probability of a class being difficult decreases to .61 while the probability of a class not being difficult increases to .39
+    
+  + Now present the evidence that both SAT scores were good and the letter of recommendation was good, what is the probability of the Diffculty of Course now?
+  
+```{r sat diff}
+prob_sat <- setEvidence(grain_list, nodes = c("SAT", "letter"), states = c("high", "high"))
+querygrain(prob_sat, nodes = "difficulty", type = "marginal")
+```
+
+    + Given the above, the probability of a difficult class increased to .67 and decreased to .32
