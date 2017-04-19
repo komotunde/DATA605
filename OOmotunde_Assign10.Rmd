@@ -1,0 +1,85 @@
+---
+title: "Data 605 Assignment 10"
+author: "Oluwakemi Omotunde"
+date: "4/12/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Playing with PageRank
+
+You’ll verify for yourself that PageRank works by performing calculations on a small universe of web pages. Let’s use the 6 page universe that we had in the course notes. For this directed graph, perform the following calculations in R.
+  • Form the A matrix. Then, introduce decay and form the B matrix as we did in the course notes.
+  
+```{r matrix}
+t <- 1/3
+A <- matrix(c(0, .5, .5, 0, 0, 0, 0, 0, 0, 0, 0, 0, t, t, 0, 0, t, 0, 0, 0, 0, 0, .5, .5, 0, 0, 0, .5, 0, .5, 0, 0, 0, 1, 0, 0), nrow = 6, byrow = TRUE)
+#just to check, let's make sure our A looks right
+A
+```
+
+```{r decay}
+#we will take the decay formula directly from page 3 of our notes
+n <- 6 #number of webpages we are working with 
+
+B <- .85 * A + (.15/n)
+B
+```
+
+  • Start with a uniform rank vector r and perform power iterations on B till convergence. That is, compute the solution r = Bn × r. Attempt this for a sufficiently large n so that r actually converges.
+
+```{r convergence}
+r <- matrix(c(.167, .167, .167, .167, .167, .167), nrow = 6, byrow = FALSE)
+r
+#we will first start with n = 6, then n = 10, 50, 100, 500, and maybe more if need be
+
+n <- 6
+r <- B^n %*% r
+r
+
+n <- 10
+r <- B^n %*% r
+r
+
+n <- 50
+r <- B^n %*% r
+r
+
+n <- 100
+r <- B^n %*% r
+r
+
+n <- 500
+r <- B^n %*% r
+r
+
+n <- 1000
+r <- B^n %*% r
+r
+#at n = 1000 we see that the values converge to 2.261084e-258
+```
+  
+  • Compute the eigen-decomposition of B and verify that you indeed get an eigenvalue of 1 as the largest eigenvalue and that its corresponding eigenvector is the same vector that you obtained in the previous power iteration method. Further, this eigenvector has all positive entries and it sums to 1.
+  
+```{r eigen decomp} 
+eigen.decomp <- eigen(B)
+eigen.decomp
+
+#The highest value I got for the eigen value is .95165271+0i, which is not 1 but very close to 1. It does not look as though my eigenvectors are the same as the one from above, so I think I may have made a mistake with my iterations.  
+```
+
+  • Use the graph package in R and its page.rank method to compute the Page Rank of the graph as given in A. Note that you don’t need to apply decay. The package starts with a connected graph and applies decay internally. Verify that you do get the same PageRank vector as the two approaches above.
+  
+```{r page rank}
+require(igraph)
+net <- graph.adjacency(A, mode = "directed")
+pagerank.A <- page.rank(net, directed = TRUE)$vector
+pagerank.A
+```
+  
+  
+  
+Please document all your experiments in an R Markdown document.
